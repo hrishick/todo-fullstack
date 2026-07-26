@@ -15,7 +15,7 @@ function Register() {
         try{
 
             await axios.post(
-                "http://localhost:5000/api/auth/register",
+                "https://todo-fullstack-qrvd.onrender.com/api/auth/register",
                 {
                     email,
                     password

@@ -10,7 +10,7 @@ function Todo() {
 
     const token = localStorage.getItem("token");
 
-    const API = "http://localhost:5000/api/tasks";
+    const API = "https://todo-fullstack-qrvd.onrender.com/api/tasks";
 
     const config = {
         headers: {
