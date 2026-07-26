@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import "./Login.css";
+import API from "../config";
 
 function Login() {
 
@@ -14,9 +15,7 @@ function Login() {
 
         try {
 
-            const res = await axios.post(
-                "https://todo-fullstack-qrvd.onrender.com/api/auth/login",
-                {
+            const res = await axios.post(`${API}/api/auth/login`,{
                     email,
                     password
                 }

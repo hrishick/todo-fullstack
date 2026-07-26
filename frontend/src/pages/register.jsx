@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import "../App.css";
+import API from "../config";
 
 function Register() {
 
@@ -14,9 +15,7 @@ function Register() {
 
         try{
 
-            await axios.post(
-                "https://todo-fullstack-qrvd.onrender.com/api/auth/register",
-                {
+            await axios.post(`${API}/api/auth/register`,{
                     email,
                     password
                 }

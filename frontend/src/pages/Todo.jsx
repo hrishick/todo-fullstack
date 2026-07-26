@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import "./Todo.css";
+import API from "../config";
+
 const token = localStorage.getItem("token");
 const email = localStorage.getItem("email");
 function Todo() {
@@ -9,8 +11,6 @@ function Todo() {
     const [tasks, setTasks] = useState([]);
 
     const token = localStorage.getItem("token");
-
-    const API = "https://todo-fullstack-qrvd.onrender.com/api/tasks";
 
     const config = {
         headers: {
@@ -21,7 +21,7 @@ function Todo() {
     // Load tasks
     const getTasks = async () => {
         try {
-            const res = await axios.get(API, config);
+            const res = await axios.get(`${API}/api/tasks`, config);
             setTasks(res.data);
         } catch (err) {
             console.log(err);
@@ -39,9 +39,7 @@ function Todo() {
 
         try {
 
-            await axios.post(
-                API,
-                {
+            await axios.post(`${API}/api/tasks`,{
                     text: task
                 },
                 config
@@ -61,8 +59,7 @@ function Todo() {
     // Delete task
     const deleteTask = async (id) => {
 
-        await axios.delete(
-            `${API}/${id}`,
+        await axios.delete(`${API}/api/tasks/${id}`,
             config
         );
 
@@ -73,8 +70,7 @@ function Todo() {
     // Toggle complete
     const toggleComplete = async (todo) => {
 
-        await axios.put(
-            `${API}/${todo._id}`,
+        await axios.put(`${API}/api/tasks/${todo._id}`,
             {
                 completed: !todo.completed
             },
@@ -95,8 +91,7 @@ function Todo() {
 
         if (!newText) return;
 
-        await axios.put(
-            `${API}/${todo._id}`,
+        await axios.put(`${API}/api/tasks/${todo._id}`,
             {
                 text: newText
             },
