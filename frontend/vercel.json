@@ -1,7 +1,7 @@
 {
   "rewrites": [
     {
-      "source": "/todolist/(.*)",
+      "source": "/(.*)",
       "destination": "/index.html"
     }
   ]

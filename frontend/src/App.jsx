@@ -10,7 +10,7 @@ function App() {
 
     return (
 
-        <BrowserRouter basename="/todolist">
+        <BrowserRouter>
 
             <Routes>
 
