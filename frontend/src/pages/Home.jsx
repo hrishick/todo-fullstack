@@ -36,7 +36,7 @@ function Home() {
       <section className="hero-section">
         <div className="hero-pill-badge">
           <Sparkles size={15} />
-          <span>Task Management with Apple Simplicity</span>
+          <span>Task Management with Simplicity</span>
         </div>
 
         <h1 className="hero-headline">
@@ -45,7 +45,7 @@ function Home() {
         </h1>
 
         <p className="hero-subtext">
-          TaskFlow gives you real-time cloud synchronization, smart priority tagging, and clean macOS aesthetics—keeping you focused on what matters most.
+          TaskFlow gives you real-time cloud synchronization, smart priority tagging, and clean aesthetics—keeping you focused on what matters most.
         </p>
 
         <div className="hero-cta-group">
