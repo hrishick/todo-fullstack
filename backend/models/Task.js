@@ -9,6 +9,16 @@ const taskSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
+    priority: {
+        type: String,
+        enum: ["low", "medium", "high"],
+        default: "medium"
+    },
+    category: {
+        type: String,
+        enum: ["Work", "Personal", "Shopping", "General"],
+        default: "General"
+    },
     user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",

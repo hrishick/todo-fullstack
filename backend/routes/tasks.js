@@ -13,7 +13,7 @@ router.get("/", auth, async (req, res) => {
 
         const tasks = await Task.find({
             user: req.user.id
-        });
+        }).sort({ createdAt: -1 });
 
         res.json(tasks);
 
@@ -37,10 +37,12 @@ router.post("/", auth, async (req, res) => {
 
     try {
 
-        const { text } = req.body;
+        const { text, priority, category } = req.body;
 
         const task = new Task({
             text,
+            priority: priority || "medium",
+            category: category || "General",
             user: req.user.id
         });
 
@@ -83,6 +85,14 @@ router.put("/:id", auth, async (req, res) => {
 
         if (req.body.completed !== undefined) {
             task.completed = req.body.completed;
+        }
+
+        if (req.body.priority !== undefined) {
+            task.priority = req.body.priority;
+        }
+
+        if (req.body.category !== undefined) {
+            task.category = req.body.category;
         }
 
         await task.save();

@@ -1,53 +1,34 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-
-import Login from "./pages/Login";
-import Register from "./pages/register";
+import { ThemeProvider } from "./context/ThemeContext";
+import MainLayout from "./components/MainLayout";
+import Home from "./pages/Home";
 import Todo from "./pages/Todo";
 
+function AppContent() {
+  const token = localStorage.getItem("token");
+
+  return (
+    <MainLayout>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route
+          path="/todo"
+          element={token ? <Todo /> : <Navigate to="/" />}
+        />
+        <Route path="*" element={<Navigate to="/" />} />
+      </Routes>
+    </MainLayout>
+  );
+}
+
 function App() {
-
-    const token = localStorage.getItem("token");
-
-    return (
-
-        <BrowserRouter>
-
-            <Routes>
-
-                <Route
-                    path="/login"
-                    element={<Login />}
-                />
-
-                <Route
-                    path="/register"
-                    element={<Register />}
-                />
-
-                <Route
-                    path="/todo"
-                    element={
-                        token
-                            ? <Todo />
-                            : <Navigate to="/login" />
-                    }
-                />
-
-                <Route
-                    path="*"
-                    element={
-                        <Navigate
-                            to={token ? "/todo" : "/login"}
-                        />
-                    }
-                />
-
-            </Routes>
-
-        </BrowserRouter>
-
-    );
-
+  return (
+    <ThemeProvider>
+      <BrowserRouter>
+        <AppContent />
+      </BrowserRouter>
+    </ThemeProvider>
+  );
 }
 
 export default App;
