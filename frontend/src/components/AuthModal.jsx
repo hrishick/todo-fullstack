@@ -217,12 +217,18 @@ function AuthModal({ isOpen, onClose, initialTab = "login", onSuccess }) {
         }, 1200);
       }
     } catch (err) {
-      if (err.response?.data?.message) {
-        setError(err.response.data.message);
+      console.error("AuthModal submission error:", err);
+
+      const serverMsg = err.response?.data?.message || err.response?.data?.error;
+
+      if (serverMsg) {
+        setError(serverMsg);
       } else if (err.response?.status === 404) {
         setError("User account not found or backend endpoint not deployed.");
-      } else if (err.code === "ERR_NETWORK" || !err.response) {
-        setError("Unable to connect to backend server. Render server may be spinning up—please wait 5 seconds and try again.");
+      } else if (err.code === "ERR_NETWORK") {
+        setError("Unable to connect to backend server. Please check your connection.");
+      } else if (err.message) {
+        setError(err.message);
       } else {
         setError("Authentication failed. Please check your credentials.");
       }
