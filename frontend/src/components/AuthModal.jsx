@@ -222,7 +222,7 @@ function AuthModal({ isOpen, onClose, initialTab = "login", onSuccess }) {
       } else if (err.response?.status === 404) {
         setError("User account not found or backend endpoint not deployed.");
       } else if (err.code === "ERR_NETWORK" || !err.response) {
-        setError("Unable to connect to backend server. Please check your connection.");
+        setError("Unable to connect to backend server. Render server may be spinning up—please wait 5 seconds and try again.");
       } else {
         setError("Authentication failed. Please check your credentials.");
       }
