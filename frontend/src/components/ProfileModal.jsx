@@ -23,7 +23,9 @@ import {
   unwrapMasterKey,
   exportMasterKeyRaw,
   importMasterKeyRaw,
-  decryptText
+  decryptText,
+  generateRecoveryKey,
+  encryptText
 } from "../utils/crypto";
 import API from "../config";
 import "../App.css";
@@ -173,14 +175,37 @@ function ProfileModal({ isOpen, onClose, onProfileUpdated }) {
       const rawMasterKey = await exportMasterKeyRaw(masterKey);
       sessionStorage.setItem("masterKey", rawMasterKey);
 
-      // 3. Decrypt stored encryptedRecoveryKey
+      // 3. Decrypt stored encryptedRecoveryKey or generate on the fly for existing accounts
+      let plainRecKey = "";
+
       if (res.data.encryptedRecoveryKey) {
-        const plainRecKey = await decryptText(res.data.encryptedRecoveryKey, masterKey);
-        setRevealedRecoveryKey(plainRecKey);
+        plainRecKey = await decryptText(res.data.encryptedRecoveryKey, masterKey);
       } else {
-        setRepromptError("Recovery key unavailable for this account.");
+        // Fallback for existing accounts: Generate and store Recovery Key now!
+        const newRecKeyStr = generateRecoveryKey();
+        const userSalt = res.data.userSalt || localStorage.getItem("userSalt") || "taskflow-default-salt";
+        const recKey = await deriveKeyFromPassword(newRecKeyStr, userSalt);
+        const encryptedMasterKeyRecovery = await wrapMasterKey(masterKey, recKey);
+        const encryptedRecoveryKey = await encryptText(newRecKeyStr, masterKey);
+
+        await axios.put(
+          `${API}/api/auth/profile`,
+          {
+            encryptedMasterKeyRecovery,
+            encryptedRecoveryKey
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          }
+        );
+
+        localStorage.setItem("encryptedRecoveryKey", encryptedRecoveryKey);
+        plainRecKey = newRecKeyStr;
       }
 
+      setRevealedRecoveryKey(plainRecKey);
       setRepromptPassword("");
       setShowPromptForKey(false);
     } catch (err) {
