@@ -14,7 +14,8 @@ import {
   Key,
   Copy,
   Check,
-  ShieldCheck
+  ShieldCheck,
+  ArrowLeft
 } from "lucide-react";
 import API from "../config";
 import {
@@ -243,11 +244,11 @@ function AuthModal({ isOpen, onClose, initialTab = "login", onSuccess }) {
           </button>
         </div>
 
-        {/* Auth Tabs */}
+        {/* Auth Tabs Header (Sign In & Create Account) */}
         <div className="auth-tabs-header" style={{ marginBottom: 20 }}>
           <button
             type="button"
-            className={`auth-tab-btn ${authTab === "login" ? "active" : ""}`}
+            className={`auth-tab-btn ${authTab === "login" || authTab === "recover" ? "active" : ""}`}
             onClick={() => {
               setAuthTab("login");
               setError("");
@@ -255,7 +256,7 @@ function AuthModal({ isOpen, onClose, initialTab = "login", onSuccess }) {
               setGeneratedRecoveryKey("");
             }}
           >
-            Sign In
+            {authTab === "recover" ? "Account Recovery" : "Sign In"}
           </button>
           <button
             type="button"
@@ -268,18 +269,6 @@ function AuthModal({ isOpen, onClose, initialTab = "login", onSuccess }) {
             }}
           >
             Create Account
-          </button>
-          <button
-            type="button"
-            className={`auth-tab-btn ${authTab === "recover" ? "active" : ""}`}
-            onClick={() => {
-              setAuthTab("recover");
-              setError("");
-              setSuccess("");
-              setGeneratedRecoveryKey("");
-            }}
-          >
-            Recover
           </button>
         </div>
 
@@ -395,9 +384,32 @@ function AuthModal({ isOpen, onClose, initialTab = "login", onSuccess }) {
             )}
 
             <div className="apple-field-group">
-              <label className="apple-label">
-                {authTab === "recover" ? "New Password" : "Password"}
-              </label>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                <label className="apple-label" style={{ marginBottom: 0 }}>
+                  {authTab === "recover" ? "New Password" : "Password"}
+                </label>
+                {authTab === "login" && (
+                  <button
+                    type="button"
+                    style={{
+                      background: "none",
+                      border: "none",
+                      color: "var(--apple-blue)",
+                      fontSize: 12,
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      padding: 0
+                    }}
+                    onClick={() => {
+                      setAuthTab("recover");
+                      setError("");
+                      setSuccess("");
+                    }}
+                  >
+                    Forgot Password?
+                  </button>
+                )}
+              </div>
               <div className="apple-input-wrapper">
                 <input
                   type={showPassword ? "text" : "password"}
@@ -445,6 +457,34 @@ function AuthModal({ isOpen, onClose, initialTab = "login", onSuccess }) {
                 : "Recover Account & Reset Password"}
               {!loading && <ArrowRight size={18} />}
             </button>
+
+            {authTab === "recover" && (
+              <button
+                type="button"
+                style={{
+                  width: "100%",
+                  marginTop: 12,
+                  background: "none",
+                  border: "none",
+                  color: "var(--text-secondary)",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 6
+                }}
+                onClick={() => {
+                  setAuthTab("login");
+                  setError("");
+                  setSuccess("");
+                }}
+              >
+                <ArrowLeft size={15} />
+                <span>Back to Sign In</span>
+              </button>
+            )}
           </form>
         )}
       </div>

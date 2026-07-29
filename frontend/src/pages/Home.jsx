@@ -2,10 +2,9 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowRight,
-  Sparkles,
-  Zap,
+  ShieldCheck,
   Layers,
-  BarChart3,
+  Key,
   Check,
   Sun
 } from "lucide-react";
@@ -35,8 +34,8 @@ function Home() {
       {/* Hero Section */}
       <section className="hero-section">
         <div className="hero-pill-badge">
-          <Sparkles size={15} />
-          <span>Task Management with Simplicity</span>
+          <ShieldCheck size={15} />
+          <span>Zero-Knowledge End-to-End Encrypted</span>
         </div>
 
         <h1 className="hero-headline">
@@ -45,7 +44,7 @@ function Home() {
         </h1>
 
         <p className="hero-subtext">
-          TaskFlow gives you real-time cloud synchronization, smart priority tagging, and clean aesthetics—keeping you focused on what matters most.
+          TaskFlow protects your privacy with AES-256-GCM Zero-Knowledge Encryption—only you hold the decryption key. Neither our servers nor database admins can ever read your tasks.
         </p>
 
         <div className="hero-cta-group">
@@ -137,8 +136,8 @@ function Home() {
       {/* Features Grid Section */}
       <section className="features-section" id="features">
         <div className="section-header-center">
-          <div className="section-tag">Powerful Functionality</div>
-          <h2 className="section-title">Designed for focus and speed</h2>
+          <div className="section-tag">Powerful Privacy & Speed</div>
+          <h2 className="section-title">Designed for focus, security, and speed</h2>
         </div>
 
         <div className="features-grid">
@@ -154,31 +153,31 @@ function Home() {
 
           <div className="feature-card-apple">
             <div className="feature-icon-box icon-purple-box">
-              <Zap size={24} />
+              <ShieldCheck size={24} />
             </div>
-            <h3 className="feature-card-title">Real-Time Cloud Sync</h3>
+            <h3 className="feature-card-title">Zero-Knowledge E2EE Encryption</h3>
             <p className="feature-card-desc">
-              Deploys on Render backend with MongoDB Atlas database for instant, encrypted data availability across all your desktop and mobile browser sessions.
+              All your tasks, priorities, and categories are encrypted on your device using AES-256-GCM before saving to MongoDB Atlas. Only you hold the decryption key.
             </p>
           </div>
 
           <div className="feature-card-apple">
             <div className="feature-icon-box icon-orange-box">
-              <Sun size={24} />
+              <Key size={24} />
             </div>
-            <h3 className="feature-card-title">Dual Light & Dark Theme</h3>
+            <h3 className="feature-card-title">Zero-Knowledge Recovery Key</h3>
             <p className="feature-card-desc">
-              Switch effortlessly between clean Apple Light mode and OLED Dark mode with automatic system preference detection and memory.
+              Includes a 24-character client-side Recovery Key so you can reset your password anytime without risking data loss.
             </p>
           </div>
 
           <div className="feature-card-apple">
             <div className="feature-icon-box icon-green-box">
-              <BarChart3 size={24} />
+              <Sun size={24} />
             </div>
-            <h3 className="feature-card-title">Progress & Analytics</h3>
+            <h3 className="feature-card-title">Dual Light & Dark Theme</h3>
             <p className="feature-card-desc">
-              Track your daily completion rate with visual stat counters and real-time progress bars to stay motivated.
+              Switch effortlessly between clean Apple Light mode and OLED Dark mode with automatic system preference detection and memory.
             </p>
           </div>
         </div>
@@ -203,9 +202,9 @@ function Home() {
 
             <div className="step-card">
               <div className="step-num-badge">2</div>
-              <h3 className="step-title">Tag & Prioritize</h3>
+              <h3 className="step-title">Client-Side Encryption</h3>
               <p className="step-desc">
-                Set priority levels and assign categories for clear visual hierarchy.
+                Your browser automatically encrypts task text and metadata with AES-256-GCM.
               </p>
             </div>
 
@@ -213,7 +212,7 @@ function Home() {
               <div className="step-num-badge">3</div>
               <h3 className="step-title">Achieve & Sync</h3>
               <p className="step-desc">
-                Mark tasks complete with satisfying circular checkmarks and track your progress.
+                Mark tasks complete with satisfying circular checkmarks and sync securely across devices.
               </p>
             </div>
           </div>
@@ -223,9 +222,9 @@ function Home() {
       {/* CTA Banner Section */}
       <section className="cta-banner-section" id="about">
         <div className="cta-banner-card">
-          <h2 className="cta-banner-title">Ready to streamline your workflow?</h2>
+          <h2 className="cta-banner-title">Ready for Zero-Knowledge Productivity?</h2>
           <p className="cta-banner-sub">
-            Join users who organize their work and life with TaskFlow. Free forever account with instant access.
+            Join users who organize their work and life with TaskFlow E2EE. Free forever account with instant access.
           </p>
           {token ? (
             <Link to="/todo" className="btn-cta-white">
