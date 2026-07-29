@@ -14,6 +14,7 @@ import {
   Tag,
   AlertCircle
 } from "lucide-react";
+import { importMasterKeyRaw, encryptText, decryptText } from "../utils/crypto";
 import API from "../config";
 import "../App.css";
 
@@ -50,11 +51,31 @@ function Todo() {
     [token]
   );
 
-  // Load tasks from API
+  // Load and Decrypt tasks from API
   const getTasks = useCallback(async () => {
     try {
       setLoading(true);
       const res = await axios.get(`${API}/api/tasks`, axiosConfig);
+      
+      const rawMasterKeyHex = sessionStorage.getItem("masterKey");
+      if (rawMasterKeyHex) {
+        try {
+          const masterKey = await importMasterKeyRaw(rawMasterKeyHex);
+          const decryptedList = await Promise.all(
+            res.data.map(async (task) => ({
+              ...task,
+              text: await decryptText(task.text, masterKey),
+              priority: await decryptText(task.priority, masterKey),
+              category: await decryptText(task.category, masterKey)
+            }))
+          );
+          setTasks(decryptedList);
+          return;
+        } catch (decryptErr) {
+          console.error("Task decryption failed:", decryptErr);
+        }
+      }
+
       setTasks(res.data);
     } catch (err) {
       console.error(err);
@@ -68,19 +89,32 @@ function Todo() {
     getTasks();
   }, [getTasks]);
 
-  // Add new task
+  // Add new encrypted task
   const addTask = async (e) => {
     if (e) e.preventDefault();
     if (taskText.trim() === "") return;
 
     try {
       setErrorMessage("");
+
+      let payloadText = taskText;
+      let payloadPriority = priority;
+      let payloadCategory = category;
+
+      const rawMasterKeyHex = sessionStorage.getItem("masterKey");
+      if (rawMasterKeyHex) {
+        const masterKey = await importMasterKeyRaw(rawMasterKeyHex);
+        payloadText = await encryptText(taskText, masterKey);
+        payloadPriority = await encryptText(priority, masterKey);
+        payloadCategory = await encryptText(category, masterKey);
+      }
+
       await axios.post(
         `${API}/api/tasks`,
         {
-          text: taskText,
-          priority,
-          category
+          text: payloadText,
+          priority: payloadPriority,
+          category: payloadCategory
         },
         axiosConfig
       );
@@ -119,18 +153,30 @@ function Todo() {
     setEditCategory(todo.category || "General");
   };
 
-  // Save edited task
+  // Save edited encrypted task
   const saveEditedTask = async (e) => {
     if (e) e.preventDefault();
     if (!editingTask || editText.trim() === "") return;
 
     try {
+      let payloadText = editText;
+      let payloadPriority = editPriority;
+      let payloadCategory = editCategory;
+
+      const rawMasterKeyHex = sessionStorage.getItem("masterKey");
+      if (rawMasterKeyHex) {
+        const masterKey = await importMasterKeyRaw(rawMasterKeyHex);
+        payloadText = await encryptText(editText, masterKey);
+        payloadPriority = await encryptText(editPriority, masterKey);
+        payloadCategory = await encryptText(editCategory, masterKey);
+      }
+
       await axios.put(
         `${API}/api/tasks/${editingTask._id}`,
         {
-          text: editText,
-          priority: editPriority,
-          category: editCategory
+          text: payloadText,
+          priority: payloadPriority,
+          category: payloadCategory
         },
         axiosConfig
       );

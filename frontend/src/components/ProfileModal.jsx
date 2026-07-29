@@ -14,6 +14,11 @@ import {
   CheckCircle2,
   AlertTriangle
 } from "lucide-react";
+import {
+  deriveKeyFromPassword,
+  wrapMasterKey,
+  importMasterKeyRaw
+} from "../utils/crypto";
 import API from "../config";
 import "../App.css";
 
@@ -77,11 +82,24 @@ function ProfileModal({ isOpen, onClose, onProfileUpdated }) {
     setLoading(true);
 
     try {
+      let encryptedMasterKeyPassword = undefined;
+
+      // If user is updating password, re-wrap master key with new password key
+      const rawMasterKeyHex = sessionStorage.getItem("masterKey");
+      if (password && rawMasterKeyHex) {
+        const masterKey = await importMasterKeyRaw(rawMasterKeyHex);
+        // We use email as userSalt context or derive from existing salt
+        const userSalt = localStorage.getItem("userSalt") || "taskflow-default-salt";
+        const newPassKey = await deriveKeyFromPassword(password, userSalt);
+        encryptedMasterKeyPassword = await wrapMasterKey(masterKey, newPassKey);
+      }
+
       const res = await axios.put(
         `${API}/api/auth/profile`,
         {
           email,
-          ...(password ? { password } : {})
+          ...(password ? { password } : {}),
+          ...(encryptedMasterKeyPassword ? { encryptedMasterKeyPassword } : {})
         },
         {
           headers: {
