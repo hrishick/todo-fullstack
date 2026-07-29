@@ -9,6 +9,18 @@ const userSchema = new mongoose.Schema({
     password: {
         type: String,
         required: true
+    },
+    userSalt: {
+        type: String,
+        default: null
+    },
+    encryptedMasterKeyPassword: {
+        type: String,
+        default: null
+    },
+    encryptedMasterKeyRecovery: {
+        type: String,
+        default: null
     }
 });
 

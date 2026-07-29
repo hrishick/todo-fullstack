@@ -14,7 +14,13 @@ router.post("/register", async (req, res) => {
 
     try {
 
-        const { email, password } = req.body;
+        const {
+            email,
+            password,
+            userSalt,
+            encryptedMasterKeyPassword,
+            encryptedMasterKeyRecovery
+        } = req.body;
 
         if (!email || !password) {
             return res.status(400).json({
@@ -22,7 +28,7 @@ router.post("/register", async (req, res) => {
             });
         }
 
-        const existingUser = await User.findOne({ email });
+        const existingUser = await User.findOne({ email: email.toLowerCase() });
 
         if (existingUser) {
             return res.status(400).json({
@@ -33,8 +39,11 @@ router.post("/register", async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, 10);
 
         const user = new User({
-            email,
-            password: hashedPassword
+            email: email.toLowerCase(),
+            password: hashedPassword,
+            userSalt: userSalt || null,
+            encryptedMasterKeyPassword: encryptedMasterKeyPassword || null,
+            encryptedMasterKeyRecovery: encryptedMasterKeyRecovery || null
         });
 
         await user.save();
@@ -65,7 +74,7 @@ router.post("/login", async (req, res) => {
 
         const { email, password } = req.body;
 
-        const user = await User.findOne({ email });
+        const user = await User.findOne({ email: email.toLowerCase() });
 
         if (!user) {
             return res.status(400).json({
@@ -94,7 +103,10 @@ router.post("/login", async (req, res) => {
         res.json({
             message: "Login Successful",
             token,
-            email: user.email
+            email: user.email,
+            userSalt: user.userSalt,
+            encryptedMasterKeyPassword: user.encryptedMasterKeyPassword,
+            encryptedMasterKeyRecovery: user.encryptedMasterKeyRecovery
         });
 
     } catch (err) {
@@ -111,13 +123,18 @@ router.post("/login", async (req, res) => {
 
 
 /*
-    UPDATE PROFILE (EMAIL / PASSWORD)
+    UPDATE PROFILE (EMAIL / PASSWORD / KEYS)
 */
 router.put("/profile", auth, async (req, res) => {
 
     try {
 
-        const { email, password } = req.body;
+        const {
+            email,
+            password,
+            encryptedMasterKeyPassword,
+            encryptedMasterKeyRecovery
+        } = req.body;
 
         const user = await User.findById(req.user.id);
 
@@ -127,7 +144,6 @@ router.put("/profile", auth, async (req, res) => {
             });
         }
 
-        // Check if email is being changed and if it is taken by another user
         if (email && email.toLowerCase() !== user.email.toLowerCase()) {
             const existingUser = await User.findOne({ 
                 email: email.toLowerCase(),
@@ -143,7 +159,6 @@ router.put("/profile", auth, async (req, res) => {
             user.email = email.toLowerCase();
         }
 
-        // Update password if provided
         if (password) {
             if (password.length < 6) {
                 return res.status(400).json({
@@ -151,6 +166,14 @@ router.put("/profile", auth, async (req, res) => {
                 });
             }
             user.password = await bcrypt.hash(password, 10);
+        }
+
+        if (encryptedMasterKeyPassword) {
+            user.encryptedMasterKeyPassword = encryptedMasterKeyPassword;
+        }
+
+        if (encryptedMasterKeyRecovery) {
+            user.encryptedMasterKeyRecovery = encryptedMasterKeyRecovery;
         }
 
         await user.save();
@@ -164,7 +187,70 @@ router.put("/profile", auth, async (req, res) => {
         res.json({
             message: "Profile updated successfully",
             token,
-            email: user.email
+            email: user.email,
+            userSalt: user.userSalt,
+            encryptedMasterKeyPassword: user.encryptedMasterKeyPassword,
+            encryptedMasterKeyRecovery: user.encryptedMasterKeyRecovery
+        });
+
+    } catch (err) {
+
+        console.log(err);
+
+        res.status(500).json({
+            message: "Server Error"
+        });
+
+    }
+
+});
+
+
+/*
+    ZERO-KNOWLEDGE ACCOUNT RECOVERY RESET
+*/
+router.post("/recover-account", async (req, res) => {
+
+    try {
+
+        const {
+            email,
+            newPassword,
+            newEncryptedMasterKeyPassword
+        } = req.body;
+
+        if (!email || !newPassword || !newEncryptedMasterKeyPassword) {
+            return res.status(400).json({
+                message: "Email, new password, and re-wrapped key are required"
+            });
+        }
+
+        const user = await User.findOne({ email: email.toLowerCase() });
+
+        if (!user) {
+            return res.status(404).json({
+                message: "User account not found"
+            });
+        }
+
+        user.password = await bcrypt.hash(newPassword, 10);
+        user.encryptedMasterKeyPassword = newEncryptedMasterKeyPassword;
+
+        await user.save();
+
+        const token = jwt.sign(
+            { id: user._id },
+            process.env.JWT_SECRET,
+            { expiresIn: "1d" }
+        );
+
+        res.json({
+            message: "Account recovered successfully",
+            token,
+            email: user.email,
+            userSalt: user.userSalt,
+            encryptedMasterKeyPassword: user.encryptedMasterKeyPassword,
+            encryptedMasterKeyRecovery: user.encryptedMasterKeyRecovery
         });
 
     } catch (err) {
@@ -195,6 +281,46 @@ router.delete("/account", auth, async (req, res) => {
 
         res.json({
             message: "Account and associated tasks deleted successfully"
+        });
+
+    } catch (err) {
+
+        console.log(err);
+
+        res.status(500).json({
+            message: "Server Error"
+        });
+
+    }
+
+});
+
+/*
+    FETCH PUBLIC KEY PARAMS FOR ZERO-KNOWLEDGE RECOVERY / LOGIN
+*/
+router.post("/user-key-params", async (req, res) => {
+
+    try {
+
+        const { email } = req.body;
+
+        if (!email) {
+            return res.status(400).json({
+                message: "Email address is required"
+            });
+        }
+
+        const user = await User.findOne({ email: email.toLowerCase() });
+
+        if (!user) {
+            return res.status(404).json({
+                message: "User account not found"
+            });
+        }
+
+        res.json({
+            userSalt: user.userSalt,
+            encryptedMasterKeyRecovery: user.encryptedMasterKeyRecovery
         });
 
     } catch (err) {
