@@ -19,7 +19,8 @@ router.post("/register", async (req, res) => {
             password,
             userSalt,
             encryptedMasterKeyPassword,
-            encryptedMasterKeyRecovery
+            encryptedMasterKeyRecovery,
+            encryptedRecoveryKey
         } = req.body;
 
         if (!email || !password) {
@@ -43,7 +44,8 @@ router.post("/register", async (req, res) => {
             password: hashedPassword,
             userSalt: userSalt || null,
             encryptedMasterKeyPassword: encryptedMasterKeyPassword || null,
-            encryptedMasterKeyRecovery: encryptedMasterKeyRecovery || null
+            encryptedMasterKeyRecovery: encryptedMasterKeyRecovery || null,
+            encryptedRecoveryKey: encryptedRecoveryKey || null
         });
 
         await user.save();
@@ -106,7 +108,8 @@ router.post("/login", async (req, res) => {
             email: user.email,
             userSalt: user.userSalt,
             encryptedMasterKeyPassword: user.encryptedMasterKeyPassword,
-            encryptedMasterKeyRecovery: user.encryptedMasterKeyRecovery
+            encryptedMasterKeyRecovery: user.encryptedMasterKeyRecovery,
+            encryptedRecoveryKey: user.encryptedRecoveryKey
         });
 
     } catch (err) {
@@ -133,7 +136,8 @@ router.put("/profile", auth, async (req, res) => {
             email,
             password,
             encryptedMasterKeyPassword,
-            encryptedMasterKeyRecovery
+            encryptedMasterKeyRecovery,
+            encryptedRecoveryKey
         } = req.body;
 
         const user = await User.findById(req.user.id);
@@ -176,6 +180,10 @@ router.put("/profile", auth, async (req, res) => {
             user.encryptedMasterKeyRecovery = encryptedMasterKeyRecovery;
         }
 
+        if (encryptedRecoveryKey) {
+            user.encryptedRecoveryKey = encryptedRecoveryKey;
+        }
+
         await user.save();
 
         const token = jwt.sign(
@@ -190,7 +198,8 @@ router.put("/profile", auth, async (req, res) => {
             email: user.email,
             userSalt: user.userSalt,
             encryptedMasterKeyPassword: user.encryptedMasterKeyPassword,
-            encryptedMasterKeyRecovery: user.encryptedMasterKeyRecovery
+            encryptedMasterKeyRecovery: user.encryptedMasterKeyRecovery,
+            encryptedRecoveryKey: user.encryptedRecoveryKey
         });
 
     } catch (err) {

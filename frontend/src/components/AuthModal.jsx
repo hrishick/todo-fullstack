@@ -93,6 +93,8 @@ function AuthModal({ isOpen, onClose, initialTab = "login", onSuccess }) {
         // Store JWT token & Email
         localStorage.setItem("token", res.data.token);
         localStorage.setItem("email", res.data.email);
+        if (res.data.userSalt) localStorage.setItem("userSalt", res.data.userSalt);
+        if (res.data.encryptedRecoveryKey) localStorage.setItem("encryptedRecoveryKey", res.data.encryptedRecoveryKey);
 
         // Zero-Knowledge Key Unwrap
         if (res.data.userSalt && res.data.encryptedMasterKeyPassword) {
@@ -135,13 +137,15 @@ function AuthModal({ isOpen, onClose, initialTab = "login", onSuccess }) {
 
         const encryptedMasterKeyPassword = await wrapMasterKey(masterKey, passKey);
         const encryptedMasterKeyRecovery = await wrapMasterKey(masterKey, recKey);
+        const encryptedRecoveryKey = await encryptText(recKeyString, masterKey);
 
         await axios.post(`${API}/api/auth/register`, {
           email,
           password,
           userSalt,
           encryptedMasterKeyPassword,
-          encryptedMasterKeyRecovery
+          encryptedMasterKeyRecovery,
+          encryptedRecoveryKey
         });
 
         setGeneratedRecoveryKey(recKeyString);

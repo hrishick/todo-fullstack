@@ -12,12 +12,18 @@ import {
   X,
   AlertCircle,
   CheckCircle2,
-  AlertTriangle
+  AlertTriangle,
+  Key,
+  Copy,
+  Check
 } from "lucide-react";
 import {
   deriveKeyFromPassword,
   wrapMasterKey,
-  importMasterKeyRaw
+  unwrapMasterKey,
+  exportMasterKeyRaw,
+  importMasterKeyRaw,
+  decryptText
 } from "../utils/crypto";
 import API from "../config";
 import "../App.css";
@@ -35,6 +41,14 @@ function ProfileModal({ isOpen, onClose, onProfileUpdated }) {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
+  // Recovery Key Reveal with Password Re-prompt State
+  const [showPromptForKey, setShowPromptForKey] = useState(false);
+  const [repromptPassword, setRepromptPassword] = useState("");
+  const [repromptLoading, setRepromptLoading] = useState(false);
+  const [repromptError, setRepromptError] = useState("");
+  const [revealedRecoveryKey, setRevealedRecoveryKey] = useState("");
+  const [copiedRevealedKey, setCopiedRevealedKey] = useState(false);
+
   // Delete Confirmation State
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
@@ -47,6 +61,11 @@ function ProfileModal({ isOpen, onClose, onProfileUpdated }) {
       setError("");
       setSuccess("");
       setShowDeleteConfirm(false);
+      setShowPromptForKey(false);
+      setRepromptPassword("");
+      setRepromptError("");
+      setRevealedRecoveryKey("");
+      setCopiedRevealedKey(false);
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "unset";
@@ -88,7 +107,6 @@ function ProfileModal({ isOpen, onClose, onProfileUpdated }) {
       const rawMasterKeyHex = sessionStorage.getItem("masterKey");
       if (password && rawMasterKeyHex) {
         const masterKey = await importMasterKeyRaw(rawMasterKeyHex);
-        // We use email as userSalt context or derive from existing salt
         const userSalt = localStorage.getItem("userSalt") || "taskflow-default-salt";
         const newPassKey = await deriveKeyFromPassword(password, userSalt);
         encryptedMasterKeyPassword = await wrapMasterKey(masterKey, newPassKey);
@@ -129,6 +147,61 @@ function ProfileModal({ isOpen, onClose, onProfileUpdated }) {
     }
   };
 
+  const handleRevealRecoveryKey = async (e) => {
+    e.preventDefault();
+    setRepromptError("");
+    setRepromptLoading(true);
+
+    try {
+      // 1. Re-verify user credentials
+      const res = await axios.post(`${API}/api/auth/login`, {
+        email: localStorage.getItem("email"),
+        password: repromptPassword
+      });
+
+      // 2. Unwrap master key from login response
+      if (!res.data.userSalt || !res.data.encryptedMasterKeyPassword) {
+        setRepromptError("Zero-Knowledge Encryption is not enabled for this account.");
+        setRepromptLoading(false);
+        return;
+      }
+
+      const passKey = await deriveKeyFromPassword(repromptPassword, res.data.userSalt);
+      const masterKey = await unwrapMasterKey(res.data.encryptedMasterKeyPassword, passKey);
+
+      // Save active master key in session storage
+      const rawMasterKey = await exportMasterKeyRaw(masterKey);
+      sessionStorage.setItem("masterKey", rawMasterKey);
+
+      // 3. Decrypt stored encryptedRecoveryKey
+      if (res.data.encryptedRecoveryKey) {
+        const plainRecKey = await decryptText(res.data.encryptedRecoveryKey, masterKey);
+        setRevealedRecoveryKey(plainRecKey);
+      } else {
+        setRepromptError("Recovery key unavailable for this account.");
+      }
+
+      setRepromptPassword("");
+      setShowPromptForKey(false);
+    } catch (err) {
+      if (err.response?.data?.message) {
+        setRepromptError(err.response.data.message);
+      } else {
+        setRepromptError("Invalid password. Verification failed.");
+      }
+    } finally {
+      setRepromptLoading(false);
+    }
+  };
+
+  const handleCopyRevealedKey = () => {
+    if (revealedRecoveryKey) {
+      navigator.clipboard.writeText(revealedRecoveryKey);
+      setCopiedRevealedKey(true);
+      setTimeout(() => setCopiedRevealedKey(false), 2500);
+    }
+  };
+
   const handleDeleteAccount = async () => {
     setError("");
     setDeleteLoading(true);
@@ -142,6 +215,7 @@ function ProfileModal({ isOpen, onClose, onProfileUpdated }) {
 
       localStorage.removeItem("token");
       localStorage.removeItem("email");
+      sessionStorage.removeItem("masterKey");
       onClose();
       window.location.href = "/";
     } catch (err) {
@@ -252,11 +326,109 @@ function ProfileModal({ isOpen, onClose, onProfileUpdated }) {
           </button>
         </form>
 
+        {/* Zero-Knowledge Recovery Key Section */}
+        <div style={{ marginTop: 20, paddingTop: 16, borderTop: "1px solid var(--border-subtle)" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14, fontWeight: 700, color: "var(--text-primary)" }}>
+              <Key size={18} color="var(--apple-blue)" />
+              <span>Recovery Key</span>
+            </div>
+            <span style={{ fontSize: 11, color: "var(--apple-green)", fontWeight: 600, background: "rgba(52, 199, 89, 0.12)", padding: "2px 8px", borderRadius: 12 }}>
+              Zero-Knowledge
+            </span>
+          </div>
+
+          {!revealedRecoveryKey && !showPromptForKey && (
+            <button
+              type="button"
+              className="btn-nav-outline"
+              style={{ width: "100%", justifyContent: "center", display: "flex", alignItems: "center", gap: 8, padding: 10 }}
+              onClick={() => setShowPromptForKey(true)}
+            >
+              <Lock size={15} />
+              <span>Reveal Recovery Key</span>
+            </button>
+          )}
+
+          {showPromptForKey && !revealedRecoveryKey && (
+            <form onSubmit={handleRevealRecoveryKey} className="apple-fade" style={{ background: "var(--bg-input)", padding: 14, borderRadius: 12, border: "1px solid var(--border-subtle)" }}>
+              <label className="apple-label" style={{ fontSize: 12, marginBottom: 6 }}>
+                Re-enter Password to Reveal Key
+              </label>
+              <div className="apple-input-wrapper" style={{ marginBottom: 10 }}>
+                <input
+                  type="password"
+                  className="apple-input"
+                  placeholder="Enter current password"
+                  value={repromptPassword}
+                  onChange={(e) => setRepromptPassword(e.target.value)}
+                  required
+                />
+                <Lock className="apple-input-icon" size={16} />
+              </div>
+              {repromptError && (
+                <div style={{ fontSize: 12, color: "var(--apple-red)", marginBottom: 8 }}>
+                  {repromptError}
+                </div>
+              )}
+              <div style={{ display: "flex", gap: 8 }}>
+                <button type="submit" className="btn-apple-primary" style={{ flex: 1, padding: 8, fontSize: 13 }} disabled={repromptLoading}>
+                  {repromptLoading ? "Verifying..." : "Verify & Reveal"}
+                </button>
+                <button
+                  type="button"
+                  className="btn-modal-cancel"
+                  style={{ flex: 1, padding: 8, fontSize: 13 }}
+                  onClick={() => {
+                    setShowPromptForKey(false);
+                    setRepromptPassword("");
+                    setRepromptError("");
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          )}
+
+          {revealedRecoveryKey && (
+            <div className="apple-fade" style={{ background: "rgba(0, 122, 255, 0.08)", padding: 14, borderRadius: 12, border: "1px solid rgba(0, 122, 255, 0.2)" }}>
+              <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 8, lineHeight: 1.4 }}>
+                Your 24-character Zero-Knowledge Recovery Key:
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <code style={{ flex: 1, fontFamily: "monospace", fontSize: 13, fontWeight: 700, background: "var(--bg-card-solid)", padding: "8px 12px", borderRadius: 8, border: "1px solid var(--border-subtle)", letterSpacing: 1 }}>
+                  {revealedRecoveryKey}
+                </code>
+                <button
+                  type="button"
+                  className="btn-nav-outline"
+                  style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "8px 12px" }}
+                  onClick={handleCopyRevealedKey}
+                >
+                  {copiedRevealedKey ? <Check size={14} color="var(--apple-green)" /> : <Copy size={14} />}
+                  <span>{copiedRevealedKey ? "Copied" : "Copy"}</span>
+                </button>
+              </div>
+              <button
+                type="button"
+                style={{ marginTop: 10, background: "none", border: "none", color: "var(--text-tertiary)", fontSize: 12, fontWeight: 600, cursor: "pointer", width: "100%", textAlign: "center" }}
+                onClick={() => {
+                  setRevealedRecoveryKey("");
+                  setShowPromptForKey(false);
+                }}
+              >
+                Hide Key
+              </button>
+            </div>
+          )}
+        </div>
+
         {/* Danger Zone: Delete Account */}
         <div
           style={{
-            marginTop: 24,
-            paddingTop: 18,
+            marginTop: 20,
+            paddingTop: 16,
             borderTop: "1px solid var(--border-subtle)"
           }}
         >

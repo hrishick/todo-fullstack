@@ -21,6 +21,10 @@ const userSchema = new mongoose.Schema({
     encryptedMasterKeyRecovery: {
         type: String,
         default: null
+    },
+    encryptedRecoveryKey: {
+        type: String,
+        default: null
     }
 });
 
