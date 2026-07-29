@@ -25,7 +25,8 @@ import {
   generateRecoveryKey,
   wrapMasterKey,
   unwrapMasterKey,
-  exportMasterKeyRaw
+  exportMasterKeyRaw,
+  encryptText
 } from "../utils/crypto";
 import "../App.css";
 
@@ -147,6 +148,11 @@ function AuthModal({ isOpen, onClose, initialTab = "login", onSuccess }) {
           encryptedMasterKeyRecovery,
           encryptedRecoveryKey
         });
+
+        // Store active master key in session storage so user can immediately add encrypted tasks
+        const rawMasterKey = await exportMasterKeyRaw(masterKey);
+        sessionStorage.setItem("masterKey", rawMasterKey);
+        localStorage.setItem("userSalt", userSalt);
 
         setGeneratedRecoveryKey(recKeyString);
         setSuccess("Account created successfully! Save your Zero-Knowledge Recovery Key below.");
