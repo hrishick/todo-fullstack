@@ -125,7 +125,7 @@ function Todo() {
       getTasks();
     } catch (err) {
       console.error(err);
-      setErrorMessage("Failed to add task.");
+      setErrorMessage(err.response?.data?.message || "Failed to add task.");
     }
   };
 
