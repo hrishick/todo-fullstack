@@ -309,7 +309,7 @@ function MainLayoutContent({ children }) {
 
       {/* Persistent Footer */}
       <footer className="home-footer">
-        <p>© {new Date().getFullYear()} TaskFlow Inc. Built with React, Node.js, Express & MongoDB.</p>
+        <p>TaskFlow · Built with ❤️ by Hrishick Rudhresh</p>
       </footer>
     </div>
   );
