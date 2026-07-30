@@ -309,7 +309,7 @@ function MainLayoutContent({ children }) {
 
       {/* Persistent Footer */}
       <footer className="home-footer">
-        <p>TaskFlow · Built with ❤️ by Hrishick Rudhresh</p>
+        <p>TaskFlow · Built with ❤️ by Hrishick Rudhresh </p>
       </footer>
     </div>
   );
