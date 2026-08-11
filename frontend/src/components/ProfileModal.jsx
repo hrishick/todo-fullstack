@@ -106,7 +106,7 @@ function ProfileModal({ isOpen, onClose, onProfileUpdated }) {
       let encryptedMasterKeyPassword = undefined;
 
       // If user is updating password, re-wrap master key with new password key
-      const rawMasterKeyHex = sessionStorage.getItem("masterKey");
+      const rawMasterKeyHex = sessionStorage.getItem("masterKey") || localStorage.getItem("masterKey");
       if (password && rawMasterKeyHex) {
         const masterKey = await importMasterKeyRaw(rawMasterKeyHex);
         const userSalt = localStorage.getItem("userSalt") || "taskflow-default-salt";
@@ -171,9 +171,10 @@ function ProfileModal({ isOpen, onClose, onProfileUpdated }) {
       const passKey = await deriveKeyFromPassword(repromptPassword, res.data.userSalt);
       const masterKey = await unwrapMasterKey(res.data.encryptedMasterKeyPassword, passKey);
 
-      // Save active master key in session storage
+      // Save active master key in session storage & local storage
       const rawMasterKey = await exportMasterKeyRaw(masterKey);
       sessionStorage.setItem("masterKey", rawMasterKey);
+      localStorage.setItem("masterKey", rawMasterKey);
 
       // 3. Decrypt stored encryptedRecoveryKey or generate on the fly for existing accounts
       let plainRecKey = "";
@@ -238,9 +239,8 @@ function ProfileModal({ isOpen, onClose, onProfileUpdated }) {
         }
       });
 
-      localStorage.removeItem("token");
-      localStorage.removeItem("email");
-      sessionStorage.removeItem("masterKey");
+      localStorage.clear();
+      sessionStorage.clear();
       onClose();
       window.location.href = "/";
     } catch (err) {

@@ -30,8 +30,8 @@ function MainLayoutContent({ children }) {
   const userInitial = emailState.charAt(0).toUpperCase();
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("email");
+    localStorage.clear();
+    sessionStorage.clear();
     window.location.href = "/";
   };
 

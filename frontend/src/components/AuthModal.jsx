@@ -107,6 +107,7 @@ function AuthModal({ isOpen, onClose, initialTab = "login", onSuccess }) {
             );
             const rawMasterKey = await exportMasterKeyRaw(masterKey);
             sessionStorage.setItem("masterKey", rawMasterKey);
+            localStorage.setItem("masterKey", rawMasterKey);
           } catch (cryptoErr) {
             console.error("Zero-Knowledge Key Unwrap failed:", cryptoErr);
           }
@@ -149,9 +150,10 @@ function AuthModal({ isOpen, onClose, initialTab = "login", onSuccess }) {
           encryptedRecoveryKey
         });
 
-        // Store active master key in session storage so user can immediately add encrypted tasks
+        // Store active master key in session & local storage so user can immediately add encrypted tasks
         const rawMasterKey = await exportMasterKeyRaw(masterKey);
         sessionStorage.setItem("masterKey", rawMasterKey);
+        localStorage.setItem("masterKey", rawMasterKey);
         localStorage.setItem("userSalt", userSalt);
 
         setGeneratedRecoveryKey(recKeyString);
@@ -214,6 +216,7 @@ function AuthModal({ isOpen, onClose, initialTab = "login", onSuccess }) {
 
         const rawMasterKey = await exportMasterKeyRaw(masterKey);
         sessionStorage.setItem("masterKey", rawMasterKey);
+        localStorage.setItem("masterKey", rawMasterKey);
 
         setSuccess("Account recovered successfully! Redirecting...");
         setTimeout(() => {

@@ -51,13 +51,16 @@ function Todo() {
     [token]
   );
 
+  // Helper to get active master key from session or persistent local storage
+  const getMasterKeyHex = () => sessionStorage.getItem("masterKey") || localStorage.getItem("masterKey");
+
   // Load and Decrypt tasks from API
   const getTasks = useCallback(async () => {
     try {
       setLoading(true);
       const res = await axios.get(`${API}/api/tasks`, axiosConfig);
       
-      const rawMasterKeyHex = sessionStorage.getItem("masterKey");
+      const rawMasterKeyHex = getMasterKeyHex();
       if (rawMasterKeyHex) {
         try {
           const masterKey = await importMasterKeyRaw(rawMasterKeyHex);
@@ -74,6 +77,12 @@ function Todo() {
         } catch (decryptErr) {
           console.error("Task decryption failed:", decryptErr);
         }
+      }
+
+      // Check if tasks contain encrypted ciphertexts but masterKey is missing
+      const hasEncryptedData = res.data.some((task) => task.text && typeof task.text === "string" && task.text.startsWith("enc:v1:"));
+      if (hasEncryptedData && !rawMasterKeyHex) {
+        setErrorMessage("Your reminders are locked. Please Sign Out and Sign In again to unlock your Zero-Knowledge keys.");
       }
 
       setTasks(res.data);
@@ -101,7 +110,7 @@ function Todo() {
       let payloadPriority = priority;
       let payloadCategory = category;
 
-      const rawMasterKeyHex = sessionStorage.getItem("masterKey");
+      const rawMasterKeyHex = getMasterKeyHex();
       if (rawMasterKeyHex) {
         const masterKey = await importMasterKeyRaw(rawMasterKeyHex);
         payloadText = await encryptText(taskText, masterKey);
@@ -163,7 +172,7 @@ function Todo() {
       let payloadPriority = editPriority;
       let payloadCategory = editCategory;
 
-      const rawMasterKeyHex = sessionStorage.getItem("masterKey");
+      const rawMasterKeyHex = getMasterKeyHex();
       if (rawMasterKeyHex) {
         const masterKey = await importMasterKeyRaw(rawMasterKeyHex);
         payloadText = await encryptText(editText, masterKey);
